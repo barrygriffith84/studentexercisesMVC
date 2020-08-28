@@ -223,8 +223,8 @@ namespace StudentExercisesMVC.Controllers
         // POST: StudentController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        //Do not need IFormCollection
-        public ActionResult Edit(int id, IFormCollection collection, Student student)
+       
+        public ActionResult Edit(int id, Student student)
         {
             try
             {
@@ -300,7 +300,7 @@ namespace StudentExercisesMVC.Controllers
         // POST: StudentController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection, Student student)
+        public ActionResult Delete(int id, Student student)
         {
             try
             {
