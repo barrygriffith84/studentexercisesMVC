@@ -148,7 +148,7 @@ namespace StudentExercisesMVC.Controllers
                     return View(viewModel);
                 }
             }
-            }
+        }
 
         // POST: StudentController/Create
         [HttpPost]
@@ -196,7 +196,11 @@ namespace StudentExercisesMVC.Controllers
                     cmd.CommandText = @"
                         SELECT Student.Id, Student.FirstName, Student.LastName, Student.SlackHandle, Student.CohortId FROM Student WHERE Student.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
+
                     SqlDataReader reader = cmd.ExecuteReader();
+
+                    // Create a new instance of our view model
+                    StudentCohortViewModel viewModel = new StudentCohortViewModel();
 
                     Student student = null;
 
@@ -212,10 +216,47 @@ namespace StudentExercisesMVC.Controllers
                         };
                     }
                     reader.Close();
+                    viewModel.student = student;
 
-                    return View(student);
+
+                   
+
+                            // Select all the cohorts
+                            cmd.CommandText = @"SELECT Cohort.Id, Cohort.Name FROM Cohort";
+
+                            reader = cmd.ExecuteReader();
+
+                            // Create a new instance of our view model
+                           
+                            while (reader.Read())
+                            {
+                                // Map the raw data to our cohort model
+                                Cohort cohort = new Cohort
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    Name = reader.GetString(reader.GetOrdinal("Name"))
+                                };
+
+                                // Use the info to build our SelectListItem
+                                SelectListItem cohortOptionTag = new SelectListItem()
+                                {
+                                    Text = cohort.Name,
+                                    Value = cohort.Id.ToString()
+                                };
+
+                                // Add the select list item to our list of dropdown options
+                                viewModel.cohorts.Add(cohortOptionTag);
+
+                            }
+
+                            reader.Close();
+
+                            return View(viewModel);
                 }
+
+
             }
+                
         }
 
 
@@ -224,7 +265,7 @@ namespace StudentExercisesMVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
        
-        public ActionResult Edit(int id, Student student)
+        public ActionResult Edit(int id, StudentCohortViewModel viewModel)
         {
             try
             {
@@ -239,10 +280,10 @@ namespace StudentExercisesMVC.Controllers
                                                 SlackHandle = @SlackHandle,
                                                 CohortId = @CohortId
                                                 WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@FirstName", student.FirstName));
-                        cmd.Parameters.Add(new SqlParameter("@LastName", student.LastName));
-                        cmd.Parameters.Add(new SqlParameter("@SlackHandle", student.SlackHandle));
-                        cmd.Parameters.Add(new SqlParameter("@CohortId", student.CohortId));
+                        cmd.Parameters.Add(new SqlParameter("@FirstName", viewModel.student.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@LastName", viewModel.student.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@SlackHandle", viewModel.student.SlackHandle));
+                        cmd.Parameters.Add(new SqlParameter("@CohortId", viewModel.student.CohortId));
 
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
@@ -251,15 +292,17 @@ namespace StudentExercisesMVC.Controllers
                         {
                             return RedirectToAction(nameof(Index));
                         }
-                        throw new Exception("No rows affected");
-                        
+                        throw new Exception("No rows affected");    
                     }
                 }
             }
             catch
             {
-                return View(student);
+                return View(viewModel);
             }
+
+
+
         }
 
         // GET: StudentController/Delete/5

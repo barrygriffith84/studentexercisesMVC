@@ -202,6 +202,8 @@ namespace StudentExercisesMVC.Controllers
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
+                    InstructorCohortViewModel viewModel = new InstructorCohortViewModel();
+
                     Instructor instructor = null;
 
                     if (reader.Read())
@@ -218,7 +220,38 @@ namespace StudentExercisesMVC.Controllers
                     }
                     reader.Close();
 
-                    return View(instructor);
+                    viewModel.instructor = instructor;
+                    // Select all the cohorts
+                    cmd.CommandText = @"SELECT Cohort.Id, Cohort.Name FROM Cohort";
+
+                    reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        // Map the raw data to our cohort model
+                        Cohort cohort = new Cohort
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name"))
+                        };
+
+                        // Use the info to build our SelectListItem
+                        SelectListItem cohortOptionTag = new SelectListItem()
+                        {
+                            Text = cohort.Name,
+                            Value = cohort.Id.ToString()
+                        };
+
+                        // Add the select list item to our list of dropdown options
+                        viewModel.cohorts.Add(cohortOptionTag);
+
+                    }
+
+                    reader.Close();
+
+
+                    // send it all to the view
+                    return View(viewModel);
                 }
             }
         }
@@ -226,7 +259,7 @@ namespace StudentExercisesMVC.Controllers
         // POST: HomeController1/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, Instructor instructor)
+        public ActionResult Edit(int id, InstructorCohortViewModel viewModel)
         {
             try
             {
@@ -242,11 +275,11 @@ namespace StudentExercisesMVC.Controllers
                                                 CohortId = @CohortId,
                                                 Specialty = @Specialty
                                                 WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@FirstName", instructor.FirstName));
-                        cmd.Parameters.Add(new SqlParameter("@LastName", instructor.LastName));
-                        cmd.Parameters.Add(new SqlParameter("@SlackHandle", instructor.SlackHandle));
-                        cmd.Parameters.Add(new SqlParameter("@CohortId", instructor.CohortId));
-                        cmd.Parameters.Add(new SqlParameter("@Specialty", instructor.Specialty));
+                        cmd.Parameters.Add(new SqlParameter("@FirstName", viewModel.instructor.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@LastName", viewModel.instructor.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@SlackHandle", viewModel.instructor.SlackHandle));
+                        cmd.Parameters.Add(new SqlParameter("@CohortId", viewModel.instructor.CohortId));
+                        cmd.Parameters.Add(new SqlParameter("@Specialty", viewModel.instructor.Specialty));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = cmd.ExecuteNonQuery();
@@ -261,7 +294,7 @@ namespace StudentExercisesMVC.Controllers
             }
             catch
             {
-                return View(instructor);
+                return View(viewModel);
             }
         }
 
